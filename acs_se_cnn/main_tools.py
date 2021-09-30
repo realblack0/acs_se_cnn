@@ -49,9 +49,11 @@ class MyLogger:
         self.tb_writer = tb_writer
         
     def write_step(self, mode, epoch, step, accuracy, loss, bce_loss, sparse_loss, time_step):
-        if self.text_writer:
-            self.text_writer.write(f"{current_time()} :: {epoch}epoch {mode} {step}step: accuracy {accuracy:.2f}% || " \
-                                   + f"loss {loss:.6f} || bce_loss {bce_loss:.6f} || sparse_loss {sparse_loss:.6f} ||" \
+        if not self.text_writer:
+            return 
+        else :
+            self.text_writer.write(f"{current_time()} :: {epoch}epoch {mode} {step}step: accuracy {accuracy.item():.2f}% || " \
+                                   + f"loss {loss.item():.6f} || bce_loss {bce_loss.item():.6f} || sparse_loss {sparse_loss.item():.6f} ||" \
                                    + f"{time_step//60}min {time_step%60:.2f}sec\n")
             self.text_writer.flush()
                    
@@ -60,11 +62,21 @@ class MyLogger:
                     train_loss, train_bce_loss, train_sparse_loss,
                     val_acc, val_time_epoch,
                     val_loss, val_bce_loss, val_sparse_loss):
+        
+        train_acc = train_acc.item()
+        train_loss = train_loss.item()
+        train_bce_loss = train_bce_loss.item()
+        train_sparse_loss = train_sparse_loss.item()
+        val_acc = val_acc.item()
+        val_loss = val_loss.item()
+        val_bce_loss = val_bce_loss.item()
+        val_sparse_loss = val_sparse_loss.item()
+        
         print(f"Train : acc {train_acc:.2f}  " \
               + f"loss {train_loss:.6f}  bce_loss {train_bce_loss:.6f}  sparse_loss {train_sparse_loss:.6f}  " \
               + f"{train_time_epoch//60}min {train_time_epoch%60:.2f}sec")
         print(f"Val   : acc {val_acc:.2f}  " \
-              + f"loss {val_loss:.6f}  bce_loss{val_bce_loss:.6f}  sparse_loss {val_sparse_loss:.6f}  " \
+              + f"loss {val_loss:.6f}  bce_loss {val_bce_loss:.6f}  sparse_loss {val_sparse_loss:.6f}  " \
               + f"{val_time_epoch//60}min {val_time_epoch%60:.2f}sec")
         
         if self.text_writer:
@@ -110,8 +122,8 @@ def train_acs(
     print(name, tag)
     text_writer = open(f"{results_dir}/log/{name}-{tag}-{current_date_hour()}.log", "w")
     tb_writer   = SummaryWriter(f"{results_dir}/tb/{tag}")
-    logger      = MyLogger(text_writer, tb_writer)
-#     logger = MyLogger()
+#     logger      = MyLogger(text_writer, tb_writer)
+    logger = MyLogger()
     
     # Setup
     train_hist = []
@@ -157,10 +169,10 @@ def train_acs(
             
             # History
             B = inputs.shape[0]
-            running_corrects    += torch.sum(corrects).item()
-            running_loss        += loss.item() * B
-            running_bce_loss    += bce_loss.item() * B
-            running_sparse_loss += sparse_loss.item() * B
+            running_corrects    += torch.sum(corrects)
+            running_loss        += loss * B
+            running_bce_loss    += bce_loss * B
+            running_sparse_loss += sparse_loss * B
             time_step = time.time() - time_step_start
             logger.write_step(mode="train", epoch=epoch, step=step, time_step=time_step,
                               accuracy=accuracy, loss=loss, bce_loss=bce_loss, sparse_loss=sparse_loss)
@@ -196,10 +208,10 @@ def train_acs(
                 
                 # History
                 B = inputs.shape[0]
-                Vrunning_corrects    += torch.sum(corrects).item()
-                Vrunning_loss        += loss.item() * B
-                Vrunning_bce_loss    += bce_loss.item() * B
-                Vrunning_sparse_loss += sparse_loss.item() * B
+                Vrunning_corrects    += torch.sum(corrects)
+                Vrunning_loss        += loss * B
+                Vrunning_bce_loss    += bce_loss * B
+                Vrunning_sparse_loss += sparse_loss * B
                 time_step = time.time() - time_step_start
                 logger.write_step(mode="test", epoch=epoch, step=step, time_step=time_step,
                                   accuracy=accuracy, loss=loss, bce_loss=bce_loss, sparse_loss=sparse_loss)

@@ -122,6 +122,9 @@ with open(file_path, "rb") as f:
     y = y.astype(np.float64)
     folds = data["folds"]
     
+X = torch.tensor(X).to(device)
+y = torch.tensor(y).to(device)
+    
 class CWTDataset(Dataset):
     def __init__(self, X, y):
         self.X = X
@@ -140,28 +143,19 @@ class CWTDataset(Dataset):
 
 cv_hist = []
 for i, (train_index, test_index) in enumerate(folds):
-    X_train = X[train_index]
-    y_train = y[train_index]
-    X_test  = X[test_index]
-    y_test  = y[test_index]
     
-    X_train = torch.tensor(X_train).to(device)
-    y_train = torch.tensor(y_train).to(device)
-    X_test  = torch.tensor(X_test).to(device)
-    y_test  = torch.tensor(y_test).to(device)
-    
+    train_dataset = CWTDataset(X[train_index], y[train_index])
+    test_dataset  = CWTDataset(X[test_index], y[test_index])
+
     print("fold", i)
-    print("X_train", X_train.shape)
-    print("y_train", y_train.shape)
-    print("X_test",  X_test.shape)
-    print("y_test",  y_test.shape)
+    print("X_train", train_dataset.X.shape)
+    print("y_train", train_dataset.y.shape)
+    print("X_test",  test_dataset.X.shape)
+    print("y_test",  test_dataset.y.shape)
 
-    train_dataset = CWTDataset(X_train, y_train)
-    test_dataset  = CWTDataset(X_test, y_test)
-
+    
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
-
 
     model = Model().double().to(device)
 
