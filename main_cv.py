@@ -81,7 +81,7 @@ class Model(nn.Module):
 #         s_acs = inputs.new_zeros(B,22,1,1)
         
         # FEATURE EXTRACTION
-        x = self.conv_layer1(inputs)
+        x = self.conv_layer1(x)
         x = F.elu(x)
         x = self.se_block1(x)
         
