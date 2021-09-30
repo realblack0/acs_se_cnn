@@ -1,5 +1,5 @@
 *.out
+*.ipynb
 results/
 cwt_data/
 acs_se_cnn/__pycache__/
-*.ipynb
