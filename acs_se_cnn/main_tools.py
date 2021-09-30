@@ -119,9 +119,6 @@ def train_acs(
         for inputs, labels in train_loader:
             time_step_start = time.time()
                         
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-
             outputs, s_acs = model(inputs, return_s_acs=True)  # feed forward
             probs = F.sigmoid(outputs)
             preds = probs.round()
@@ -158,9 +155,6 @@ def train_acs(
             for inputs, labels in val_loader:
                 time_step_start = time.time()
                 
-                inputs = inputs.to(device)
-                labels = labels.to(device)
-
                 outputs, s_acs = model(inputs, return_s_acs=True)  # feed forward
                 probs = F.sigmoid(outputs)
                 preds = probs.round()
