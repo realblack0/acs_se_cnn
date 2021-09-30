@@ -63,18 +63,18 @@ class MyLogger:
         print(f"Train : acc {train_acc:.2f}  " \
               + f"loss {train_loss:.6f}  bce_loss {train_bce_loss:.6f}  sparse_loss {train_sparse_loss:.6f}  " \
               + f"{train_time_epoch//60}min {train_time_epoch%60:.2f}sec")
-        print(f"Val : acc {val_acc:.2f}  " \
+        print(f"Val   : acc {val_acc:.2f}  " \
               + f"loss {val_loss:.6f}  bce_loss{val_bce_loss:.6f}  sparse_loss {val_sparse_loss:.6f}  " \
               + f"{val_time_epoch//60}min {val_time_epoch%60:.2f}sec")
         
         if self.text_writer:
             self.text_writer.write(f"Train : acc {train_acc:.2f}  " \
                                   + f"loss {train_loss:.6f}  bce_loss {train_bce_loss:.6f}  sparse_loss {train_sparse_loss:.6f}  " \
-                                  + f"{train_time_epoch//60}min {train_time_epoch%60:.2f}sec")
+                                  + f"{train_time_epoch//60}min {train_time_epoch%60:.2f}sec\n")
             self.text_writer.flush()
             self.text_writer.write(f"Val : acc {val_acc:.2f}  " \
                                   + f"loss {val_loss:.6f}  bce_loss{val_bce_loss:.6f}  sparse_loss {val_sparse_loss:.6f}  " \
-                                  + f"{val_time_epoch//60}min {val_time_epoch%60:.2f}sec")
+                                  + f"{val_time_epoch//60}min {val_time_epoch%60:.2f}sec\n")
             self.text_writer.flush()
         
         if self.tb_writer:
