@@ -119,11 +119,10 @@ with open(file_path, "rb") as f:
     X = data["X"]
     y = data["y"]
     y = y.reshape(-1,1)
-    y = y.astype(np.float64)
     folds = data["folds"]
     
-X = torch.tensor(X).to(device)
-y = torch.tensor(y).to(device)
+X = torch.tensor(X.astype(np.float32)).to(device)
+y = torch.tensor(y.astype(np.float32)).to(device)
     
 class CWTDataset(Dataset):
     def __init__(self, X, y):
@@ -153,11 +152,11 @@ for i, (train_index, test_index) in enumerate(folds):
     print("X_test",  test_dataset.X.shape)
     print("y_test",  test_dataset.y.shape)
 
+    torch.manual_seed(2021010556)
+    model = Model().to(device)
     
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
-
-    model = Model().double().to(device)
 
     optimizer = Optimizer(model.parameters(), lr=lr)
 
