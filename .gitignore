@@ -1,5 +1,6 @@
 *.out
 *.ipynb
+.ipynb_checkpoints/
 results/
 cwt_data/
 acs_se_cnn/__pycache__/
