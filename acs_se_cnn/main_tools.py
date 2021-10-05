@@ -1,7 +1,6 @@
 import os
 import shutil
 import numpy as np
-import telegram
 import time
 import pickle
 
