@@ -48,25 +48,18 @@ class Model(nn.Module):
         # MODEL HYPER PARAMETER ,
         n_channels = 22 if fit_data=="2a" else 3,
         n_kerenls  = 64,
-        r          = 2
     ):
         super().__init__()
-
-        # ATUO CHANNEL SELECTION
-        self.acs_layer   = ACSLayer(c=n_channels, r=r)
         
         # FEATURE EXTRACTION
         self.conv_layer1 = nn.Conv2d(n_channels, n_kerenls, kernel_size=(4,4), stride=(2, 2), padding=1)
-        self.se_block1   = SEBlock(c=n_kerenls, r=r)
         
         self.conv_layer2 = nn.Conv2d(n_kerenls, n_kerenls, kernel_size=(4,4), stride=(4, 4))
-        self.se_block2   = SEBlock(c=n_kerenls, r=r)
         
         self.conv_layer3 = nn.Conv2d(n_kerenls, n_kerenls, kernel_size=(4,4), stride=(4, 4))
-        self.se_block3   = SEBlock(c=n_kerenls, r=r)
         
         # OUTPUT
-        self.fc1 = nn.Linear(256,64)
+        self.fc1 = nn.Linear(256, 64)
         self.fc2 = nn.Linear(64, 1)
 #         self.sigmoid = F.sigmoid()
         
@@ -76,29 +69,22 @@ class Model(nn.Module):
         ----
             inputs (batch, channel, height, width) 
         """
-        # ATUO CHANNEL SELECTION
-        x, s_acs = self.acs_layer(inputs)
-#         B, _, _, _ = inputs.shape
-#         s_acs = inputs.new_zeros(B,22,1,1)
+        B, _, _, _ = inputs.shape
+        s_acs = inputs.new_zeros(B,22,1,1)
         
         # FEATURE EXTRACTION
-        x = self.conv_layer1(x)
+        x = self.conv_layer1(inputs)
         x = F.elu(x)
-        x = self.se_block1(x)
         
         x = self.conv_layer2(x)
         x = F.elu(x)
-        x = self.se_block2(x)
         
         x = self.conv_layer3(x)
-        x = F.elu(x)
-        x = self.se_block3(x)        
+        x = F.elu(x)   
         
         # OUTPUT
-        B, _, _, _ = x.shape
         x = x.reshape(B, 256)
         x = self.fc1(x) # (B, 64)
-        x = F.elu(x)
         out = self.fc2(x)
         
         if return_s_acs:
@@ -134,7 +120,7 @@ class CWTDataset(Dataset):
     
     def __len__(self):
         return len(self.y)
-
+    
 
 ###################
 #### Functions ####
@@ -357,8 +343,8 @@ def train_acs(
     logger.close()
     
     return {"train_hist":train_hist, "val_hist":val_hist, "best_val_acc":best_val_acc}
-
     
+
 ####################
 #    Training      #
 ####################
@@ -375,8 +361,11 @@ for i, (train_index, test_index) in enumerate(folds):
     print("X_test",  test_dataset.X.shape)
     print("y_test",  test_dataset.y.shape)
 
+    print("Deterministic:", args.seed)
     if args.seed == "y":
-        torch.manual_seed(2021010556)
+        seed = 2021010556
+        print(seed)
+        torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
     
