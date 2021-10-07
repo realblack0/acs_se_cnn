@@ -85,6 +85,7 @@ class Model(nn.Module):
         # OUTPUT
         x = x.reshape(B, 256)
         x = self.fc1(x) # (B, 64)
+        x = F.elu(x)
         out = self.fc2(x)
         
         if return_s_acs:
