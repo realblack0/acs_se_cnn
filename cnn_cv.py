@@ -98,7 +98,7 @@ class Model(nn.Module):
 #### Load Data ####
 ###################
 
-file_path = f"{data_path}/{'A' if fit_data=='2a' else 'B'}0{args.subject}_64x64_scipy2_cv10.pkl"
+file_path = f"{data_path}/{'A' if fit_data=='2a' else 'B'}0{args.subject}_64x64_scipy2_ica_cv10.pkl"
 print("Load data from:", file_path)
 
 with open(file_path, "rb") as f:
@@ -371,6 +371,13 @@ for i, (train_index, test_index) in enumerate(folds):
         torch.backends.cudnn.benchmark = False
     
     model = Model().to(device)
+
+    # print("weight initialization with glorot:")
+    # for n, m in model.named_modules():
+    #     if isinstance(m, nn.Conv2d):
+    #         print(n)
+    #         nn.init.xavier_uniform_(m.weight)
+    #         nn.init.xavier_uniform_(m.bias)
     
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
