@@ -1,5 +1,6 @@
 *.out
 *.ipynb
+montage.pkl
 .ipynb_checkpoints/
 results/
 cwt_data/
