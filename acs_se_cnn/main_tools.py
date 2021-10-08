@@ -149,7 +149,7 @@ def train_acs(
             accuracy = torch.sum(corrects) / B * 100
 
             # Loss
-            bce_loss     = criterion(probs, labels) 
+            bce_loss     = criterion(outputs, labels) 
             sparse_loss  = sparse_lambda * torch.norm(s_acs.squeeze(), 1) / B # sparse loss using B
             loss         = bce_loss + sparse_loss
             
@@ -193,7 +193,7 @@ def train_acs(
                 accuracy = torch.sum(corrects) / B * 100
 
                 # Loss
-                bce_loss     = criterion(probs, labels) 
+                bce_loss     = criterion(outputs, labels) 
                 sparse_loss  = sparse_lambda * torch.norm(s_acs.squeeze(), 1) / B # sparse loss using B
                 loss         = bce_loss + sparse_loss
                 

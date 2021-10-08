@@ -20,6 +20,7 @@ parser.add_argument('--name', required=True)
 parser.add_argument('--device', default="cuda")
 parser.add_argument('--subject', type=int, required=True)
 parser.add_argument('--seed', default="n")
+parser.add_argument('--sparse_lambda', default=1.0, type=float)
 args = parser.parse_args()
 
 device = torch.device(args.device)
@@ -29,11 +30,12 @@ results_dir = make_results_directory(name, copy_file=__file__, copy_dir="acs_se_
 # LEARNING STRATEGY
 batch_size = 20
 epochs     = 500
-criterion    = nn.BCELoss()
+criterion    = nn.BCEWithLogitsLoss()
 Optimizer    = torch.optim.RMSprop
 lr              = 0.001
 # HYPER PARAMETER
-sparse_lambda = 1 # ?
+sparse_lambda = args.sparse_lambda
+print("sparse_lambda", sparse_lambda)
 
 fit_data = "2a"
 data_path = "cwt_data/2a" if fit_data=="2a" else "cwt_data/2b"
@@ -47,7 +49,7 @@ class Model(nn.Module):
         self, 
         # MODEL HYPER PARAMETER ,
         n_channels = 22 if fit_data=="2a" else 3,
-        n_kerenls  = 64,
+        n_kernels  = 64,
         r          = 2
     ):
         super().__init__()
@@ -56,49 +58,56 @@ class Model(nn.Module):
         self.acs_layer   = ACSLayer(c=n_channels, r=r)
         
         # FEATURE EXTRACTION
-        self.conv_layer1 = nn.Conv2d(n_channels, n_kerenls, kernel_size=(4,4), stride=(2, 2), padding=1)
-        self.se_block1   = SEBlock(c=n_kerenls, r=r)
+        self.conv_layer1 = nn.Conv2d(n_channels, n_kernels, kernel_size=(4,4), stride=(2, 2), padding=1)
+        self.bn1 = nn.BatchNorm2d(n_kernels)
+        self.se_block1   = SEBlock(c=n_kernels, r=r)
         
-        self.conv_layer2 = nn.Conv2d(n_kerenls, n_kerenls, kernel_size=(4,4), stride=(4, 4))
-        self.se_block2   = SEBlock(c=n_kerenls, r=r)
+        self.conv_layer2 = nn.Conv2d(n_kernels, n_kernels, kernel_size=(4,4), stride=(4, 4))
+        self.bn2 = nn.BatchNorm2d(n_kernels)
+        self.se_block2   = SEBlock(c=n_kernels, r=r)
         
-        self.conv_layer3 = nn.Conv2d(n_kerenls, n_kerenls, kernel_size=(4,4), stride=(4, 4))
-        self.se_block3   = SEBlock(c=n_kerenls, r=r)
+        self.conv_layer3 = nn.Conv2d(n_kernels, n_kernels, kernel_size=(4,4), stride=(4, 4))
+        self.bn3 = nn.BatchNorm2d(n_kernels)
+        self.se_block3   = SEBlock(c=n_kernels, r=r)
         
         # OUTPUT
-        self.fc1 = nn.Linear(4, 1)
+        self.fc1 = nn.Linear(256,64)
+        self.bn4 = nn.BatchNorm1d(64)
         self.fc2 = nn.Linear(64, 1)
 #         self.sigmoid = F.sigmoid()
         
-    def forward(self, inputs, return_s_acs=False): 
+    def forward(self, x, return_s_acs=False): 
         """ 
         Args
         ----
-            inputs (batch, channel, height, width) 
+            x (batch, channel, height, width) 
         """
         # ATUO CHANNEL SELECTION
-        x, s_acs = self.acs_layer(inputs)
+        x, s_acs = self.acs_layer(x)
 #         B, _, _, _ = inputs.shape
 #         s_acs = inputs.new_zeros(B,22,1,1)
         
         # FEATURE EXTRACTION
         x = self.conv_layer1(x)
+        x = self.bn1(x)
         x = F.elu(x)
         x = self.se_block1(x)
         
         x = self.conv_layer2(x)
+        x = self.bn2(x)
         x = F.elu(x)
         x = self.se_block2(x)
         
         x = self.conv_layer3(x)
+        x = self.bn3(x)
         x = F.elu(x)
         x = self.se_block3(x)        
         
         # OUTPUT
         B, _, _, _ = x.shape
-        x = x.reshape(B, 64, 4)
-        x = self.fc1(x) # (B, 64, 1)
-        x = x.squeeze() # (B, 64)
+        x = x.reshape(B, 256)
+        x = self.fc1(x) # (B, 64)
+        x = self.bn4(x)
         x = F.elu(x)
         out = self.fc2(x)
         
@@ -112,7 +121,7 @@ class Model(nn.Module):
 #### Load Data ####
 ###################
 
-file_path = f"{data_path}/{'A' if fit_data=='2a' else 'B'}0{args.subject}_64x64_scipy2_cv10.pkl"
+file_path = f"{data_path}/{'A' if fit_data=='2a' else 'B'}0{args.subject}_64x64_scipy2_ica_cv10.pkl"
 print("Load data from:", file_path)
 
 with open(file_path, "rb") as f:
@@ -136,7 +145,7 @@ class CWTDataset(Dataset):
     def __len__(self):
         return len(self.y)
 
-
+    
 ####################
 #    Training      #
 ####################
@@ -159,6 +168,13 @@ for i, (train_index, test_index) in enumerate(folds):
         torch.backends.cudnn.benchmark = False
     
     model = Model().to(device)
+
+    # print("weight initialization with glorot:")
+    # for n, m in model.named_modules():
+    #     if isinstance(m, nn.Conv2d):
+    #         print(n)
+    #         nn.init.xavier_uniform_(m.weight)
+    #         nn.init.xavier_uniform_(m.bias)
     
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)

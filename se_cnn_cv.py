@@ -53,16 +53,19 @@ class Model(nn.Module):
         r          = 2
     ):
         super().__init__()
-
+        
         # FEATURE EXTRACTION
         self.conv_layer1 = nn.Conv2d(n_channels, n_kernels, kernel_size=(4,4), stride=(2, 2), padding=1)
-        self.bn1 = nn.BatchNorm2d(n_kernels)
+        self.bn1         = nn.BatchNorm2d(n_kernels)
+        self.se_block1   = SEBlock(c=n_kernels, r=r)
         
         self.conv_layer2 = nn.Conv2d(n_kernels, n_kernels, kernel_size=(4,4), stride=(4, 4))
-        self.bn2 = nn.BatchNorm2d(n_kernels)
+        self.bn2         = nn.BatchNorm2d(n_kernels)
+        self.se_block2   = SEBlock(c=n_kernels, r=r)
         
         self.conv_layer3 = nn.Conv2d(n_kernels, n_kernels, kernel_size=(4,4), stride=(4, 4))
-        self.bn3 = nn.BatchNorm2d(n_kernels)
+        self.bn3         = nn.BatchNorm2d(n_kernels)
+        self.se_block3   = SEBlock(c=n_kernels, r=r)
         
         # OUTPUT
         self.fc1 = nn.Linear(256,64)
@@ -83,14 +86,17 @@ class Model(nn.Module):
         x = self.conv_layer1(x)
         x = self.bn1(x)
         x = F.elu(x)
+        x = self.se_block1(x)
         
         x = self.conv_layer2(x)
         x = self.bn2(x)
         x = F.elu(x)
+        x = self.se_block2(x)
         
         x = self.conv_layer3(x)
         x = self.bn3(x)
         x = F.elu(x)
+        x = self.se_block3(x)        
         
         # OUTPUT
         B, _, _, _ = x.shape
@@ -134,6 +140,7 @@ class CWTDataset(Dataset):
     def __len__(self):
         return len(self.y)
 
+    
 ####################
 #    Training      #
 ####################
