@@ -76,14 +76,14 @@ class Model(nn.Module):
         self.fc2 = nn.Linear(64, 1)
 #         self.sigmoid = F.sigmoid()
         
-    def forward(self, inputs, return_s_acs=False): 
+    def forward(self, x, return_s_acs=False): 
         """ 
         Args
         ----
-            inputs (batch, channel, height, width) 
+            x (batch, channel, height, width) 
         """
         # ATUO CHANNEL SELECTION
-        x, s_acs = self.acs_layer(inputs)
+        x, s_acs = self.acs_layer(x)
 #         B, _, _, _ = inputs.shape
 #         s_acs = inputs.new_zeros(B,22,1,1)
         
