@@ -4,3 +4,7 @@
 results/
 cwt_data/
 acs_se_cnn/__pycache__/
+results_nohup000-999/
+nohup000-999/
+
+!archive_ipynb/*.ipynb
